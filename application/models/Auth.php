@@ -12,6 +12,7 @@ class Auth extends CI_Model
             'email' => $email,
             'password' => password_hash($password, PASSWORD_DEFAULT),
             'role_id' => 2,
+            'is_active' => 1,
         ];
         $this->db->insert('user', $data);
     }
@@ -26,42 +27,52 @@ class Auth extends CI_Model
         // cek user
         if ($account)
         {
-            if (password_verify($password, $account['password']))
+            if ($account['is_active'] == 1)
             {
-                if ($account['role_id'] == 1)
+                if (password_verify($password, $account['password']))
                 {
-                    $data = [
-                        'id' => $account['id'],
-                        'email' => $account['email'],
-                        'role_id' => $account['role_id']
-                    ];
-                    $this->session->set_userdata($data);
-
-                    redirect('AdminController');
+                    if ($account['role_id'] == 1)
+                    {
+                        $data = [
+                            'id' => $account['id'],
+                            'email' => $account['email'],
+                            'role_id' => $account['role_id']
+                        ];
+                        $this->session->set_userdata($data);
+    
+                        redirect('AdminController');
+                    }
+                    else
+                    {
+                        $data = [
+                            'id' => $account['id'],
+                            'email' => $account['email'],
+                            'role_id' => $account['role_id']
+                        ];
+                        $this->session->set_userdata($data);
+                        redirect('UserController');
+                    }
                 }
                 else
                 {
-                    $data = [
-                        'id' => $account['id'],
-                        'email' => $account['email'],
-                        'role_id' => $account['role_id']
-                    ];
-                    $this->session->set_userdata($data);
-                    redirect('UserController');
+                    $this->session->set_flashdata('message', '
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    Wrong Password!!</div>');
+                    redirect('AuthController');
                 }
             }
             else
             {
                 $this->session->set_flashdata('message', '
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                Wrong Password!!</div>');
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                This email is not active!!</div>');
                 redirect('AuthController');
             }
         }
         else
         {
         $this->session->set_flashdata('message', '
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
         Email is not registered!!</div>');
         redirect('AuthController');
         }
